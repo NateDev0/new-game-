@@ -455,10 +455,6 @@ def main():
         # Draw hotbar
         draw_hotbar(screen)
         
-        # Draw shelf interface if open
-        if SHELF_OPEN:
-            draw_shelf_interface(screen)
-        
         # Draw dragged item last so it's on top
         if DRAGGING_ITEM:
             draw_dragged_item(screen, DRAGGING_ITEM, mouse_pos)
