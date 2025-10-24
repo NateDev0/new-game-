@@ -302,13 +302,8 @@ def main():
                             
                     # Original E key handling for shelf/house
                     if inside_house and not SHELF_OPEN:
-                        shelf_in_view = pygame.Rect(
-                            SHELF_LOCATION.x - cam_x,
-                            SHELF_LOCATION.y - cam_y,
-                            SHELF_LOCATION.width,
-                            SHELF_LOCATION.height
-                        )
-                        if shelf_in_view.colliderect(player):
+                        # Check collision in world coordinates, not screen coordinates
+                        if SHELF_LOCATION.colliderect(player):
                             SHELF_OPEN = True
                     elif SHELF_OPEN:
                         SHELF_OPEN = False
@@ -428,14 +423,8 @@ def main():
         # UI
         draw_text(screen, "Move: Arrow keys / WASD   Enter/Exit: E/ESC   Quit: Close", 10, 10)
         if inside_house:
-            # Show shelf interaction prompt when near
-            shelf_in_view = pygame.Rect(
-                SHELF_LOCATION.x - cam_x,
-                SHELF_LOCATION.y - cam_y,
-                SHELF_LOCATION.width,
-                SHELF_LOCATION.height
-            )
-            if shelf_in_view.colliderect(player) and not SHELF_OPEN:
+            # Show shelf interaction prompt when near (check in world coordinates)
+            if SHELF_LOCATION.colliderect(player) and not SHELF_OPEN:
                 draw_centered_popup(screen, "Press E to open shelf")
             
             # Draw exit instruction
