@@ -116,7 +116,7 @@ def draw_centered_popup(surf, text, color=(255, 255, 0)):
 
 # House entrance zone at (0,0)
 HOUSE_ENTRANCE = pygame.Rect(0, 0, 100, 100)  # Interaction zone size
-SHELF_LOCATION = pygame.Rect(344, 68, 25, 56)  # Interaction area from y=68 to y=124
+SHELF_LOCATION = pygame.Rect(344, 68, 20, 20)  # Interaction area from y=68 to y=124
 
 # Shelf interaction variables
 SHELF_INVENTORY_SIZE = 20
