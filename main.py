@@ -116,7 +116,7 @@ def draw_centered_popup(surf, text, color=(255, 255, 0)):
 
 # House entrance zone at (0,0)
 HOUSE_ENTRANCE = pygame.Rect(0, 0, 100, 100)  # Interaction zone size
-SHELF_LOCATION = pygame.Rect(344, 68, 20, 20)  # Interaction area from y=68 to y=124
+SHELF_LOCATION = pygame.Rect(300, 50, 150, 100)  # Much larger interaction area for easier access
 
 # Shelf interaction variables
 SHELF_INVENTORY_SIZE = 20
@@ -275,9 +275,8 @@ def main():
     inside_house = False
     global SHELF_OPEN, DRAGGING_ITEM, TUTORIAL_DONE
     
-    # Start player in center of map
-    player.x = WORLD_W // 2 - player.width // 2
-    player.y = WORLD_H // 2 - player.height // 2
+    # Store where player was before entering house
+    pre_house_position = None
 
     while running:
         dt = clock.tick(60) / 1000.0  # seconds
@@ -310,6 +309,8 @@ def main():
                     elif not inside_house:
                         # Existing house entrance logic
                         if HOUSE_ENTRANCE.colliderect(player):
+                            # Save current position before entering
+                            pre_house_position = (player.x, player.y)
                             inside_house = True
                             # Place player at bottom middle of house interior
                             player.x = HOUSE_W // 2 - player.width // 2
@@ -321,9 +322,12 @@ def main():
                     elif inside_house:
                         # Exit house
                         inside_house = False
-                        # Place player just outside house entrance
-                        player.x = HOUSE_ENTRANCE.x + HOUSE_ENTRANCE.width
-                        player.y = HOUSE_ENTRANCE.y + HOUSE_ENTRANCE.height
+                        # Return to saved position or default to just outside entrance
+                        if pre_house_position:
+                            player.x, player.y = pre_house_position
+                        else:
+                            player.x = HOUSE_ENTRANCE.x + HOUSE_ENTRANCE.width
+                            player.y = HOUSE_ENTRANCE.y + HOUSE_ENTRANCE.height
                     else:
                         # Only quit game if outside
                         running = False
