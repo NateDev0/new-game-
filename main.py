@@ -21,7 +21,8 @@ TUTORIAL_DONE = False  # Add this line
 GROUND_ITEMS = []  # List of items dropped on ground with positions
 PICKUP_RANGE = 50  # How close player needs to be to pick up items
 
-pygame.init()
+pygame.display.init()
+pygame.font.init()
 screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
 clock = pygame.time.Clock()
 font = pygame.font.SysFont(None, 24)
@@ -116,7 +117,7 @@ def draw_centered_popup(surf, text, color=(255, 255, 0)):
 
 # House entrance zone at (0,0)
 HOUSE_ENTRANCE = pygame.Rect(0, 0, 100, 100)  # Interaction zone size
-SHELF_LOCATION = pygame.Rect(300, 50, 150, 100)  # Much larger interaction area for easier access
+SHELF_LOCATION = pygame.Rect(344, 65, 5,75)  # Much larger interaction area for easier access
 
 # Shelf interaction variables
 SHELF_INVENTORY_SIZE = 20
@@ -153,6 +154,7 @@ def draw_inventory_interface(surf, items, start_x, start_y, max_slots, title=Non
             img_x = x + (slot_size - scaled_img.get_width()) // 2
             img_y = y + (slot_size - scaled_img.get_height()) // 2
             surf.blit(scaled_img, (img_x, img_y))
+
             # Draw quantity
             draw_text(surf, str(item["quantity"]), x + slot_size - 20, y + slot_size - 20, (255, 255, 0))
             # Draw item name below slot
@@ -281,7 +283,7 @@ def main():
     while running:
         dt = clock.tick(60) / 1000.0  # seconds
         mouse_pos = pygame.mouse.get_pos()
-        
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -300,10 +302,12 @@ def main():
                             continue  # Skip other E key handling if we picked up an item
                             
                     # Original E key handling for shelf/house
-                    if inside_house and not SHELF_OPEN:
+                    if inside_house and not SHELF_OPEN:                   
+                        
                         # Check collision in world coordinates, not screen coordinates
                         if SHELF_LOCATION.colliderect(player):
                             SHELF_OPEN = True
+        
                     elif SHELF_OPEN:
                         SHELF_OPEN = False
                     elif not inside_house:
@@ -417,6 +421,8 @@ def main():
         screen.fill((0, 0, 0))
         if inside_house:
             screen.blit(house_interior, (-cam_x, -cam_y))
+            color = (255,0,0)
+            pygame.draw.rect(screen, color, pygame.Rect(344, 65, 100, 144))
         else:
             screen.blit(bg, (-cam_x, -cam_y))
         
