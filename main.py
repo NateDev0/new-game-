@@ -64,7 +64,7 @@ WORLD_W, WORLD_H = bg.get_width(), bg.get_height()
 HOUSE_W, HOUSE_H = house_interior.get_width(), house_interior.get_height()
 
 # Scale player bigger so it's more visible
-player_img = scale_surface_to_max(player_img, (256, 256))  # Increased from 128 to 256
+player_img = scale_surface_to_max(player_img, (256,256))
 
 # If the player image is still the same visual as the background (e.g. it's huge),
 # create a tiny visible fallback so you can move something.
@@ -77,7 +77,10 @@ if player_img.get_width() > WORLD_W // 2 or player_img.get_height() > WORLD_H //
 pygame.display.set_caption("Map - Move the player with Arrow keys / WASD")
 
 # Player setup (world coords) - start centered on the map
-player = pygame.Rect(0, 0, player_img.get_width(), player_img.get_height())
+# Player setup (world coords) - start centered on the map
+# Use smaller hitbox size instead of full image size
+PLAYER_HITBOX_SIZE = 164
+player = pygame.Rect(0, 0, PLAYER_HITBOX_SIZE, PLAYER_HITBOX_SIZE)
 player.x = max(0, min(WORLD_W - player.width, WORLD_W // 2 - player.width // 2))
 player.y = max(0, min(WORLD_H - player.height, WORLD_H // 2 - player.height // 2))
 
@@ -117,7 +120,7 @@ def draw_centered_popup(surf, text, color=(255, 255, 0)):
 
 # House entrance zone at (0,0)
 HOUSE_ENTRANCE = pygame.Rect(0, 0, 100, 100)  # Interaction zone size
-SHELF_LOCATION = pygame.Rect(344, 65, 5,75)  # Much larger interaction area for easier access
+SHELF_LOCATION = pygame.Rect(496, 156,40,40)  # Smaller hitbox centered at (536, 206)# Match the visual area  # Much larger interaction area for easier access
 
 # Shelf interaction variables
 SHELF_INVENTORY_SIZE = 20
@@ -300,12 +303,20 @@ def main():
                                     GROUND_ITEMS.remove(closest_item)
                                     break
                             continue  # Skip other E key handling if we picked up an item
-                            
+                                            
+
                     # Original E key handling for shelf/house
                     if inside_house and not SHELF_OPEN:                   
                         
-                        # Check collision in world coordinates, not screen coordinates
-                        if SHELF_LOCATION.colliderect(player):
+                        # Check if player is close enough to shelf (using center points)
+                        player_center_x = player.centerx
+                        player_center_y = player.centery
+                        shelf_center_x = SHELF_LOCATION.centerx
+                        shelf_center_y = SHELF_LOCATION.centery
+                        
+                        distance = ((player_center_x - shelf_center_x)**2 + (player_center_y - shelf_center_y)**2)**0.5
+                        
+                        if distance <10:
                             SHELF_OPEN = True
         
                     elif SHELF_OPEN:
@@ -422,7 +433,7 @@ def main():
         if inside_house:
             screen.blit(house_interior, (-cam_x, -cam_y))
             color = (255,0,0)
-            pygame.draw.rect(screen, color, pygame.Rect(344, 65, 100, 144))
+            pygame.draw.rect(screen, color, pygame.Rect(496, 156, 80, 100))
         else:
             screen.blit(bg, (-cam_x, -cam_y))
         
@@ -450,7 +461,13 @@ def main():
         
         # Debug: show player world coordinates and FPS
         draw_text(screen, f"Player: {player.x},{player.y}  FPS: {int(clock.get_fps())}", 10, 30)
-
+  #     Debug: show player world coordinates and FPS
+        draw_text(screen, f"Player: {player.x},{player.y}  FPS: {int(clock.get_fps())}", 10, 30)
+        # Add this new line to show mouse world position when inside house
+        if inside_house:
+            mouse_world_x = mouse_pos[0] + cam_x
+            mouse_world_y = mouse_pos[1] + cam_y
+            draw_text(screen, f"Mouse World: {mouse_world_x},{mouse_world_y}", 10, 50, (0, 255, 0))
         # Draw hotbar
         draw_hotbar(screen)
         
