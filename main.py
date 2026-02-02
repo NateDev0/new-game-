@@ -17,6 +17,7 @@ THE_BEE_TREE_PATH = r"C:\Users\NL354868689\OneDrive - District School Board of N
 THE_BEE_HIVE_PATH = r"C:\Users\NL354868689\OneDrive - District School Board of Niagara\coding\new-game-\photos\item photos\The_bee_hive.png"
 THE_BEE_BOX_PATH = r"C:\Users\NL354868689\OneDrive - District School Board of Niagara\coding\new-game-\photos\item photos\the_bee_box.png"
 PUFFY_HONEY_PATH = r"C:\Users\NL354868689\OneDrive - District School Board of Niagara\coding\new-game-\photos\item photos\Puffy-Honey.png"
+FILLUP_TABLE_PATH = r"C:\Users\NL354868689\OneDrive - District School Board of Niagara\coding\new-game-\photos\item photos\fillup_table_image.png"
 
 # Update constants section
 SCREEN_W, SCREEN_H = 800, 600
@@ -64,6 +65,17 @@ except:
 
 # Scale computer image to fit screen
 computer_img = scale_surface_to_max(computer_img, (SCREEN_W, SCREEN_H))
+
+# Load FillUp Table image
+try:
+    fillup_table_img = pygame.image.load(FILLUP_TABLE_PATH).convert_alpha()
+except:
+    print(f"Failed to load FillUp Table image from {FILLUP_TABLE_PATH}")
+    fillup_table_img = pygame.Surface((400, 300), pygame.SRCALPHA)
+    fillup_table_img.fill((0, 255, 0))  # Green fallback for visibility
+
+# Scale FillUp Table image to fit screen
+fillup_table_img = scale_surface_to_max(fillup_table_img, (SCREEN_W, SCREEN_H))
 
 # Load item images with fallbacks
 try:
@@ -193,22 +205,13 @@ COMPUTER_OPEN = False  # Track if computer interface is open
 # (x1, y1, x2, y2) - top-left to bottom-right
 BEE_TREE_BUTTON = pygame.Rect(64, 242, 196 - 64, 264 - 242)
 
-# Computer interaction
-COMPUTER_LOCATION = pygame.Rect(0, 0, 50, 50)  # Area from (0,0) to (49,49) approx
-COMPUTER_OPEN = False  # Track if computer interface is open
-
 # FillUp Table interaction
-FILLUP_TABLE_LOCATION = pygame.Rect(104, 0, 91, 50)  # x=104 to 195, y=0 inside trap house
+FILLUP_TABLE_LOCATION = pygame.Rect(96, 0, 195, 1)  # x=104 to 195, y=0 inside trap house
 FILLUP_TABLE_OPEN = False  # Track if FillUp Table interface is open
 
 # Shelf interaction variables
 SHELF_INVENTORY_SIZE = 20
 SHELF_OPEN = False  # Track if shelf interface is open
-
-# FillUp Table variables
-fillup_cartridges = None
-fillup_honey = 0
-fillup_output = None
 
 # Update shelf items with proper names
 shelf_items = [
@@ -266,61 +269,45 @@ def draw_shelf_interface(surf, hover_idx=None, hover_scroll=0):
     
     # Draw only shelf inventory (removed player inventory section)
     draw_inventory_interface(surf, shelf_items, SCREEN_W//4, SCREEN_H//4, SHELF_INVENTORY_SIZE, "Shelf Items", hover_idx, hover_scroll)
-    
-    # Draw instructions - remove global reference since constant is already global
-    if not TUTORIAL_DONE:
-        draw_text(surf, "Drag items between shelf and hotbar", SCREEN_W//2 - 150, SCREEN_H - 40, (255, 255, 0))
 
 def draw_fillup_table_interface(surf):
-    # Draw semi-transparent overlay only over the table area
-    table_x, table_y = 160, 40  # visually matches the table in the trap house
-    table_w, table_h = 180, 100
-    overlay = pygame.Surface((table_w, table_h), pygame.SRCALPHA)
-    overlay.fill((60, 40, 20, 220))  # Brownish overlay for table
-    surf.blit(overlay, (table_x, table_y))
-
-    # Draw table outline
-    pygame.draw.rect(surf, (120, 80, 40), (table_x, table_y, table_w, table_h), 4)
-
-    # Title
-    draw_text(surf, "FillUp Table", table_x + 40, table_y + 8, (255, 255, 255))
-
-    # Slot positions visually on the table
-    slot1_rect = pygame.Rect(table_x + 20, table_y + 40, 40, 40)  # Cartridges
-    slot2_rect = pygame.Rect(table_x + 70, table_y + 40, 40, 40)  # Honey
-    slot3_rect = pygame.Rect(table_x + 120, table_y + 40, 40, 40)  # Output
-    pack_button = pygame.Rect(table_x + 70, table_y + 80, 60, 30)
-
-    # Draw slots
-    pygame.draw.rect(surf, (100, 100, 100), slot1_rect)
-    draw_text(surf, "Cartridges", slot1_rect.x - 8, slot1_rect.y - 18, (255, 255, 255))
-    if fillup_cartridges:
-        scaled = scale_surface_to_max(fillup_cartridges["image"], (36, 36))
-        surf.blit(scaled, (slot1_rect.x + 2, slot1_rect.y + 2))
-        draw_text(surf, str(fillup_cartridges["quantity"]), slot1_rect.x + 40, slot1_rect.y + 20, (255, 255, 0))
-
-    pygame.draw.rect(surf, (100, 100, 100), slot2_rect)
-    draw_text(surf, "Honey", slot2_rect.x + 2, slot2_rect.y - 18, (255, 255, 255))
-    if fillup_honey > 0:
-        scaled = scale_surface_to_max(honey_currency_img, (36, 36))
-        surf.blit(scaled, (slot2_rect.x + 2, slot2_rect.y + 2))
-        draw_text(surf, str(fillup_honey), slot2_rect.x + 40, slot2_rect.y + 20, (255, 255, 0))
-
-    pygame.draw.rect(surf, (100, 100, 100), slot3_rect)
-    draw_text(surf, "Output", slot3_rect.x + 2, slot3_rect.y - 18, (255, 255, 255))
-    if fillup_output:
-        scaled = scale_surface_to_max(fillup_output["image"], (36, 36))
-        surf.blit(scaled, (slot3_rect.x + 2, slot3_rect.y + 2))
-        draw_text(surf, str(fillup_output["quantity"]), slot3_rect.x + 40, slot3_rect.y + 20, (255, 255, 0))
-
-    # Pack button
-    pygame.draw.rect(surf, (0, 255, 0), pack_button)
-    draw_text(surf, "Pack", pack_button.x + 10, pack_button.y + 6, (0, 0, 0))
-
-    # Instructions
-    draw_text(surf, "Drag cartridges from inventory to slot 1", table_x - 20, table_y + table_h + 10, (255, 255, 0))
-    draw_text(surf, "Click honey display to add 10 honey to slot 2", table_x - 20, table_y + table_h + 30, (255, 255, 0))
-    draw_text(surf, "Click Pack to produce Puffy-Honey", table_x - 20, table_y + table_h + 50, (255, 255, 0))
+    # Scale image to fill the entire screen
+    scaled_img = pygame.transform.scale(fillup_table_img, (SCREEN_W, SCREEN_H))
+    surf.blit(scaled_img, (0, 0))
+    
+    # Draw honey counter overlay at top right
+    scaled_honey_img = scale_surface_to_max(honey_currency_img, (48, 48))
+    surf.blit(scaled_honey_img, (SCREEN_W - 200, 10))
+    
+    # Draw honey text with black outline
+    honey_text_img = font.render(f"Honey: {HONEY_AMOUNT}", True, (255, 255, 0))
+    honey_outline_text = font.render(f"Honey: {HONEY_AMOUNT}", True, (0, 0, 0))
+    
+    # Draw black outline (offset in 8 directions)
+    for dx in [-1, 0, 1]:
+        for dy in [-1, 0, 1]:
+            if dx != 0 or dy != 0:
+                surf.blit(honey_outline_text, (SCREEN_W - 140 + dx, 25 + dy))
+    
+    # Draw yellow text on top
+    surf.blit(honey_text_img, (SCREEN_W - 140, 25))
+    
+    # Draw ESC instruction in top left corner in yellow with black outline
+    text_img = font.render("Press ESC to go back", True, (255, 255, 0))
+    outline_text = font.render("Press ESC to go back", True, (0, 0, 0))
+    
+    # Draw black outline (offset in 8 directions)
+    for dx in [-1, 0, 1]:
+        for dy in [-1, 0, 1]:
+            if dx != 0 or dy != 0:
+                surf.blit(outline_text, (10 + dx, 10 + dy))
+    
+    # Draw yellow text on top
+    surf.blit(text_img, (10, 10))
+    
+    # Optional: Show mouse coordinates to help you plot clickable areas
+    mouse_pos = pygame.mouse.get_pos()
+    draw_text(surf, f"Mouse: {mouse_pos[0]},{mouse_pos[1]}", 10, 30, (0, 255, 0))
 
 def draw_hotbar(surf):
     slot_size = 40
@@ -439,8 +426,6 @@ def draw_ground_items(surf, cam_x, cam_y):
         screen_y = ground_item.y - cam_y - scaled_img.get_height()//2
         surf.blit(scaled_img, (screen_x, screen_y))
 
-
-
 def draw_planted_items(surf, cam_x, cam_y):
     for planted_item in PLANTED_ITEMS:
         # Draw planted item image
@@ -538,7 +523,7 @@ def draw_coin_display(surf):
 def main():
     running = True
     inside_house = False
-    global SHELF_OPEN, DRAGGING_ITEM, TUTORIAL_DONE, COMPUTER_OPEN, HONEY_AMOUNT, COIN_AMOUNT, HONEY_PRODUCTION_TIMER, FILLUP_TABLE_OPEN, fillup_cartridges, fillup_honey, fillup_output
+    global SHELF_OPEN, DRAGGING_ITEM, TUTORIAL_DONE, COMPUTER_OPEN, HONEY_AMOUNT, COIN_AMOUNT, HONEY_PRODUCTION_TIMER, FILLUP_TABLE_OPEN
     
     # Store where player was before entering house
     pre_house_position = None
@@ -606,16 +591,20 @@ def main():
                                     GROUND_ITEMS.remove(closest_item)
                                     break
                             continue  # Skip other E key handling if we picked up an item
-                                            
 
                     # Original E key handling for shelf/house
                     if SHELF_OPEN:
                         SHELF_OPEN = False
                     elif COMPUTER_OPEN:
                         COMPUTER_OPEN = False
+                    elif FILLUP_TABLE_OPEN:
+                        FILLUP_TABLE_OPEN = False
                     elif inside_house:
-                        # Check if player is close enough to computer first
-                        if COMPUTER_LOCATION.colliderect(player):
+                        # Check if player is close enough to FillUp Table first
+                        if FILLUP_TABLE_LOCATION.colliderect(player):
+                            FILLUP_TABLE_OPEN = True
+                        # Check if player is close enough to computer
+                        elif COMPUTER_LOCATION.colliderect(player):
                             COMPUTER_OPEN = True
                         else:
                             # Check if player is close enough to shelf (using center points)
@@ -637,13 +626,7 @@ def main():
                             # Place player at bottom middle of house interior
                             player.x = HOUSE_W // 2 - player.width // 2
                             player.y = HOUSE_H - player.height - 50
-                        elif FILLUP_TABLE_LOCATION.colliderect(player):
-                            FILLUP_TABLE_OPEN = True
                 
-                # FillUp Table interaction (inside house only)
-                if inside_house and FILLUP_TABLE_LOCATION.colliderect(player):
-                    FILLUP_TABLE_OPEN = True
-                    continue
                 elif event.key == pygame.K_ESCAPE:
                     if COMPUTER_OPEN:
                         COMPUTER_OPEN = False
@@ -665,9 +648,6 @@ def main():
                         running = False
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                
-
-
                 if event.button == 1:  # Left click
                     mods = pygame.key.get_mods()
                     is_shift = mods & pygame.KMOD_SHIFT
@@ -683,32 +663,6 @@ def main():
                                     if player_inventory[i] is None:
                                         player_inventory[i] = {"name": "The Bee Tree", "quantity": 1, "image": the_bee_tree_img}
                                         break
-                    
-                    # Handle FillUp Table clicks
-                    if FILLUP_TABLE_OPEN:
-                        # Define slot positions (same as in draw function)
-                        slot1_rect = pygame.Rect(SCREEN_W//2 - 100, 150, 40, 40)  # Cartridges
-                        slot2_rect = pygame.Rect(SCREEN_W//2 - 100, 200, 40, 40)  # Honey
-                        slot3_rect = pygame.Rect(SCREEN_W//2 - 100, 250, 40, 40)  # Output
-                        pack_button = pygame.Rect(SCREEN_W//2 + 50, 200, 60, 30)
-                        
-                        # Check honey display click
-                        honey_rect = pygame.Rect(10, 70, 200, 32)
-                        if honey_rect.collidepoint(mouse_pos) and HONEY_AMOUNT >= 10:
-                            HONEY_AMOUNT -= 10
-                            fillup_honey = 10
-                        
-                        # Check pack button
-                        if pack_button.collidepoint(mouse_pos):
-                            if fillup_cartridges and fillup_cartridges["quantity"] >= 10 and fillup_honey >= 10:
-                                fillup_output = {"name": "Puffy-Honey", "quantity": 10, "image": puffy_honey_img}
-                                fillup_cartridges = None
-                                fillup_honey = 0
-                        
-                        # Check output slot for dragging
-                        if slot3_rect.collidepoint(mouse_pos) and fillup_output and not DRAGGING_ITEM:
-                            DRAGGING_ITEM = fillup_output
-                            fillup_output = None
                     
                     if SHELF_OPEN:
                         # Handle shelf inventory clicks
@@ -763,16 +717,6 @@ def main():
                         if shelf_area.collidepoint(mouse_pos):
                             shelf_items.append(DRAGGING_ITEM)
                             DRAGGING_ITEM = None
-                            TUTORIAL_DONE = True
-                    elif FILLUP_TABLE_OPEN:
-                        # Check dropping on cartridges slot
-                        slot1_rect = pygame.Rect(SCREEN_W//2 - 100, 150, 40, 40)
-                        if slot1_rect.collidepoint(mouse_pos) and DRAGGING_ITEM and DRAGGING_ITEM["name"] == "Empty Honey Cartridge" and DRAGGING_ITEM["quantity"] >= 10:
-                            fillup_cartridges = DRAGGING_ITEM.copy()
-                            fillup_cartridges["quantity"] = 10
-                            DRAGGING_ITEM["quantity"] -= 10
-                            if DRAGGING_ITEM["quantity"] <= 0:
-                                DRAGGING_ITEM = None
                             TUTORIAL_DONE = True
                     else:
                         # Check if dropping in a planting zone (when inside house)
@@ -868,8 +812,8 @@ def main():
         # Draw current scene
         screen.fill((0, 0, 0))
         
-        # Only draw game if computer is not open
-        if not COMPUTER_OPEN:
+        # Only draw game if computer or fillup table is not open
+        if not COMPUTER_OPEN and not FILLUP_TABLE_OPEN:
             if inside_house:
                 screen.blit(house_interior, (-cam_x, -cam_y))
             else:
@@ -900,6 +844,10 @@ def main():
             if COMPUTER_LOCATION.colliderect(player) and not COMPUTER_OPEN:
                 draw_centered_popup(screen, "Press E to open computer")
             
+            # Show FillUp Table interaction prompt when near inside house
+            if FILLUP_TABLE_LOCATION.colliderect(player) and not FILLUP_TABLE_OPEN:
+                draw_centered_popup(screen, "Press E to open FillUp Table")
+            
             # Draw exit instruction
             draw_text(screen, "Press ESC to leave house", SCREEN_W - 200, 10, color=(255, 255, 0))
             
@@ -910,12 +858,9 @@ def main():
         elif HOUSE_ENTRANCE.colliderect(player):
             # Show enter house popup only when outside near entrance
             draw_centered_popup(screen, "Press E to enter house")
-        # FillUp Table prompt only inside house
-        elif inside_house and FILLUP_TABLE_LOCATION.colliderect(player) and not FILLUP_TABLE_OPEN:
-            draw_centered_popup(screen, "Press E to open FillUp Table")
         
         # Debug: show player world coordinates and FPS
-        if not COMPUTER_OPEN:
+        if not COMPUTER_OPEN and not FILLUP_TABLE_OPEN:
             draw_text(screen, f"Player: {player.x},{player.y}  FPS: {int(clock.get_fps())}", 10, 30)
             # Add this new line to show mouse world position when inside house
             if inside_house:
@@ -936,8 +881,6 @@ def main():
         # Draw FillUp Table interface if open
         if FILLUP_TABLE_OPEN:
             draw_fillup_table_interface(screen)
-            # Show mouse coordinates on top of computer image
-            draw_text(screen, f"Mouse: {mouse_pos[0]},{mouse_pos[1]}", 10, 30, (0, 255, 0))
         
         # Draw dragged item last so it's on top
         if DRAGGING_ITEM:
