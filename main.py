@@ -1,5 +1,4 @@
 #Nate 2026-01-12
-aaaaaaaaaaaaa
 import os
 import sys
 import pygame
